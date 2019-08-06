@@ -8,33 +8,26 @@ namespace DeParnasso.Harmoniser.MatterMethod
 {
     public class MatterComposition : Composition
     {
-        public List<Harmonisation> Harmonisations { get; set; }
-        public MatterComposition(Key key, Meter meter) : base(key, meter) { }
-        public MatterComposition(string key, Meter meter) : base(key, meter) { }
-        public MatterComposition(string key, string meter) : base(key, meter) { }
+        public List<CipheredMelody> CipherSchemes = new List<CipheredMelody>();
+        public List<Composition> Harmonisations = new List<Composition>();
         public Melody Melody => Voices.FirstOrDefault().Melody;
-        public List<HarmonisedNoteOption> BassOptions { get; set; }
-
-        public MatterComposition(Composition composition) : base(composition.Key, composition.Meter)
+        public MatterComposition(Key key, Meter meter) : base(key, meter) { }
+        
+        public MatterComposition(Composition composition) : this(composition.Key, composition.Meter)
         {
-            Harmonisations = new List<Harmonisation>();
-            BassOptions = new List<HarmonisedNoteOption>();
             Voices = composition.Voices;
         }
 
-        public void AddHarmonisation(HarmonisedNoteOption lastNoteOption)
+        public void AddCipheredMelody(ToneCipherOption lastNoteOption)
         {
-            if (Melody.GetFirstNoteAfterPosition(lastNoteOption.StartPosition) != null)
+            if (Melody.GetFirstToneAfterPosition(lastNoteOption.StartPosition) != null)
             {
                 throw new InvalidOperationException("Adding a harmonisation is only allowed when arrived at the last melody note");
             }
 
-            var harmonisation = new Harmonisation
-            {
-                new HarmonisedNote(lastNoteOption)
-            };
-            lastNoteOption.PreviousNotes.ForEach(hno => harmonisation.Add(new HarmonisedNote(hno)));
-            Harmonisations.Add(harmonisation);
+            var cipherScheme = new CipheredMelody { new CipheredTone(lastNoteOption) };
+            lastNoteOption.PreviousNotes.ForEach(ct => cipherScheme.Add(new CipheredTone(ct)));
+            CipherSchemes.Add(cipherScheme);
         }
     }
 }

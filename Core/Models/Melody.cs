@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DeParnasso.Core.Models
 {
-    public class Melody : List<Note>
+    public class Melody : List<Tone>
     {
 		public Melody() { }
 
@@ -14,7 +14,7 @@ namespace DeParnasso.Core.Models
 			var noteStrings = input.Split(' ');
 			foreach (var noteString in noteStrings)
 			{
-				AddNote(new Note(noteString));
+				AddNote(new Tone(noteString));
 			}
 		}
 
@@ -22,21 +22,21 @@ namespace DeParnasso.Core.Models
 		
 		public string ToLyString() => string.Join(' ', this.Select(n => n.ToLyString()));
 
-		public void AddNote(Note note)
+		public void AddNote(Tone note)
 		{
 			note.StartPosition = GetDuration();
 			Add(note);
 		}
 
-        public void AddNote(string note) => AddNote(new Note(note));
+        public void AddNote(string note) => AddNote(new Tone(note));
 
         public void AddNote(Fraction position, Fraction duration, Pitch pitch)
         {
-            if (GetNoteAtPosition(position) != null)
+            if (GetToneAtPosition(position) != null)
             {
                 throw new InvalidOperationException("There is already a note at this position in this melody!");
             }
-            Add(new Note
+            Add(new Tone
             {
                 Duration = duration,
                 Pitch = pitch,
@@ -54,7 +54,7 @@ namespace DeParnasso.Core.Models
             return lastNote.StartPosition + lastNote.Duration;
         }
 
-        public Note GetLastNote() => this.OrderByDescending(n => n.StartPosition).FirstOrDefault();
+        public Tone GetLastNote() => this.OrderByDescending(n => n.StartPosition).FirstOrDefault();
 
         public bool RemoveLastNote() => Remove(GetLastNote());
 
@@ -67,11 +67,11 @@ namespace DeParnasso.Core.Models
 
 		public Melody Transpose(string interval) => Transpose(new Interval(interval));
 
-		public Note GetNoteAtPosition(Fraction position) => this.FirstOrDefault(n => n.StartPosition <= position && n.StartPosition + n.Duration > position);
-        public Note GetFirstNoteAfterPosition(Fraction position) => this.Where(n => n.StartPosition > position).OrderBy(n => n.StartPosition).FirstOrDefault();
-        public Note GetLastNoteBeforePosition(Fraction position) => this.Where(n => n.EndPosition < position).OrderByDescending(n => n.EndPosition).FirstOrDefault();
-        public Note GetNextNote(Note note) => GetFirstNoteAfterPosition(note.StartPosition);
-        public Note GetPreviousNote(Note note) => GetLastNoteBeforePosition(note.StartPosition);
+		public Tone GetToneAtPosition(Fraction position) => this.FirstOrDefault(n => n.StartPosition <= position && n.StartPosition + n.Duration > position);
+        public Tone GetFirstToneAfterPosition(Fraction position) => this.Where(n => n.StartPosition > position).OrderBy(n => n.StartPosition).FirstOrDefault();
+        public Tone GetLastToneBeforePosition(Fraction position) => this.Where(n => n.EndPosition < position).OrderByDescending(n => n.EndPosition).FirstOrDefault();
+        public Tone GetNextTone(Tone note) => GetFirstToneAfterPosition(note.StartPosition);
+        public Tone GetPreviousTone(Tone note) => GetLastToneBeforePosition(note.StartPosition);
         
     }
 }

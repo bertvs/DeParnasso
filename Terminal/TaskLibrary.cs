@@ -12,8 +12,8 @@ namespace DeParnasso.Terminal
         {
             Console.WriteLine("testing...");
 
-            var composition = new Composition("C major", "4/4");
-            var soprano = new Melody("c'4 e'4 d'4");
+            var composition = new Composition("F major", "4/4");
+            var soprano = new Melody("f'4 c''4 a'4 g'4 f'4");
             composition.AddVoice("Soprano", soprano);
             var harmoniser = new Worker(new Configuration(), composition);
             harmoniser.Execute();

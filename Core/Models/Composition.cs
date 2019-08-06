@@ -78,7 +78,7 @@ namespace DeParnasso.Core.Models
             Harmonies = new List<CompositionHarmony>();
         }
 
-        public bool IsStrongNote(Note note) => (note.StartPosition % Meter.BeatsPerBar == 0);
+        public bool IsStrongNote(Tone note) => (note.StartPosition % Meter.BeatsPerBar == 0);
 
         public Fraction GetDuration()
         {
@@ -113,12 +113,12 @@ namespace DeParnasso.Core.Models
 
             foreach (var voice in Voices)
             {
-                var noteAtPosition = voice.Melody.GetNoteAtPosition(position);
+                var noteAtPosition = voice.Melody.GetToneAtPosition(position);
 
                 if (noteAtPosition == null)
                 {
-                    var firstNoteAfterPosition = voice.Melody.GetFirstNoteAfterPosition(position);
-                    var lastNoteBeforePosition = voice.Melody.GetLastNoteBeforePosition(position);
+                    var firstNoteAfterPosition = voice.Melody.GetFirstToneAfterPosition(position);
+                    var lastNoteBeforePosition = voice.Melody.GetLastToneBeforePosition(position);
 
                     if (firstNoteAfterPosition != null)
                     {

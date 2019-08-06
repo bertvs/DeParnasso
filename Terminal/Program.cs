@@ -5,10 +5,17 @@ namespace DeParnasso.Terminal
 {
     static class Program
     {
-
-        // test hidden parallell check
+        // maak melodie van bas
+        // vul andere harmonieën in
+        
+        // export to .ly file (worker.getharmonisations)
 
         // unittests
+
+        // extra checks in matterharmoniser: 
+        // - geen sprongen in dezelfde richting: dan alleen 3 toegestaan.
+        // - geen eindeloze herhalingen: als pendel abab is geweest, geen a meer toestaan.
+        // - bij melodiesprong geen sekundgang bas in zelfde richting of sprong in bas naar 8 of 5
 
         // ciphered bass from harmonised melody, harmony from ciphered bass
 

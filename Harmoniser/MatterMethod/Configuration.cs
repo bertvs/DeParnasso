@@ -9,18 +9,21 @@ namespace DeParnasso.Harmoniser.MatterMethod
     {
         public static List<Interval> AllowedIntervals => new List<Interval>
         {
+            new Interval("m3"),
             new Interval("M3"),
             new Interval("P5"),
             new Interval("P1")
         };
 
-        public bool AllowParallells { get; set; }
-        public bool AllowHiddenParallells { get; set; }
+        public bool AllowConsecutives { get; set; }
+        public bool AllowHiddenConsecutives { get; set; }
+        public bool FinishOnTonicOrDominantOnly { get; set; }
 
-        public Configuration(bool allowParallells = false, bool allowHiddenParallells = false)
+        public Configuration(bool allowConsecutives = false, bool allowHiddenConsecutives = false, bool finishOnTonicOrDominantOnly = true)
         {
-            AllowParallells = allowParallells;
-            AllowHiddenParallells = allowHiddenParallells;
+            AllowConsecutives = allowConsecutives;
+            AllowHiddenConsecutives = allowHiddenConsecutives;
+            FinishOnTonicOrDominantOnly = finishOnTonicOrDominantOnly;
         }
     }
 }

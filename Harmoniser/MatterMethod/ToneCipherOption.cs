@@ -6,14 +6,14 @@ using System.Text;
 
 namespace DeParnasso.Harmoniser.MatterMethod
 {
-    public class HarmonisedNoteOption : HarmonisedNote
+    public class ToneCipherOption : CipheredTone
     {
-        public List<HarmonisedNoteOption> NextNoteOptions = new List<HarmonisedNoteOption>();
-        public List<HarmonisedNoteOption> PreviousNotes = new List<HarmonisedNoteOption>();
+        public List<ToneCipherOption> NextNoteOptions = new List<ToneCipherOption>();
+        public List<ToneCipherOption> PreviousNotes = new List<ToneCipherOption>();
 
-        public HarmonisedNoteOption(Note note, Interval intervalToBass) : base(note, intervalToBass) { }
+        public ToneCipherOption(Tone note, Interval intervalToBass) : base(note, intervalToBass) { }
 
-        public HarmonisedNoteOption AddAsNextNoteOption(HarmonisedNoteOption option)
+        public ToneCipherOption AddAsNextNoteOption(ToneCipherOption option)
         {
             option.PreviousNotes.Add(this);
             option.PreviousNotes.AddRange(PreviousNotes);
@@ -21,7 +21,7 @@ namespace DeParnasso.Harmoniser.MatterMethod
             return option;
         }
 
-        public HarmonisedNoteOption GetFirstWithSameBass()
+        public ToneCipherOption GetFirstWithSameBass()
         {
             var lastPrevious = this;
 

@@ -4,30 +4,30 @@ using System.Text.RegularExpressions;
 
 namespace DeParnasso.Core.Models
 {
-    public class Note : Accent
+    public class Tone : Accent
     {
         public Pitch Pitch { get; set; }
 
 		public static string RegexString => Pitch.RegexString + DurationRegex;
 
-		public Note() { }
+		public Tone() { }
 
-		public Note(string input)
+		public Tone(string input)
 		{
 			var regexResult = Regex.Match(input, RegexString);
 
 			if (!regexResult.Success)
 			{
-				throw new InvalidCastException($"Could not parse '{input}' to type Note");
+				throw new InvalidCastException($"Could not parse '{input}' to type Tone");
 			}
 
 			Pitch = new Pitch(regexResult.Groups[1].Value);
 			ParseDurationFromString(regexResult.Groups[6].Value);
 		}
 
-		public Note Transpose(string interval) => Transpose(new Interval(interval));
+		public Tone Transpose(string interval) => Transpose(new Interval(interval));
 		
-		public Note Transpose(Interval interval)
+		public Tone Transpose(Interval interval)
 		{
 			var newNote = this;
 			Pitch = Pitch.Add(interval);

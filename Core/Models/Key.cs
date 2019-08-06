@@ -84,8 +84,10 @@ namespace DeParnasso.Core.Models
 			};
 		}
 
-		private Pitch Tonic { get; set; }
+		public Pitch Tonic { get; set; }
 		private KeyMode Mode { get; set; }
+
+        public Pitch Dominant => Tonic.Add("P5");
 
 		public Key(string input)
 		{
@@ -134,7 +136,7 @@ namespace DeParnasso.Core.Models
 			foreach (var interval in Mode.Scale)
 			{
 				latest = latest.Add(interval);
-				result.Add(latest);
+				result.Add(latest.PitchClass);
 			}
 			return result;
 		}

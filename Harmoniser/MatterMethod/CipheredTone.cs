@@ -5,14 +5,16 @@ using System.Text;
 
 namespace DeParnasso.Harmoniser.MatterMethod
 {
-    public class HarmonisedNote : Note
+    public class CipheredTone : Tone
     {
         public Pitch Bass { get; set; }
         public Interval Distance => Pitch.Difference(Bass);
 
-        public HarmonisedNote() { }
+        public Tone GetBassTone() => new Tone { Pitch = Bass, StartPosition = StartPosition, Duration = Duration };
 
-        public HarmonisedNote(Note note, Interval intervalToBass)
+        public CipheredTone() { }
+
+        public CipheredTone(Tone note, Interval intervalToBass)
         {
             Bass = note.Pitch.Subtract(intervalToBass);
             Duration = note.Duration;
@@ -20,12 +22,17 @@ namespace DeParnasso.Harmoniser.MatterMethod
             StartPosition = note.StartPosition;
         }
 
-        public HarmonisedNote(HarmonisedNoteOption noteOption)
+        public CipheredTone(ToneCipherOption noteOption)
         {
             Bass = noteOption.Bass;
             Duration = noteOption.Duration;
             Pitch = noteOption.Pitch;
             StartPosition = noteOption.StartPosition;
+        }
+
+        public override string ToString()
+        {
+            return Distance.ToString();
         }
     }
 }

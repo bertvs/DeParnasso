@@ -1,4 +1,5 @@
 ﻿using DeParnasso.Core.Models;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DeParnasso.Harmoniser.MatterMethod
@@ -17,11 +18,10 @@ namespace DeParnasso.Harmoniser.MatterMethod
         public void Execute()
         {
             if (!ValidateMusic())
-            {
                 return;
-            }
 
-            FindHarmonies();
+            FindValidSchemes();
+            GenerateMusicFromSchemes();
         }
 
         private bool ValidateMusic()
@@ -44,120 +44,124 @@ namespace DeParnasso.Harmoniser.MatterMethod
             return true;
         }
 
-        private void FindHarmonies()
+        private void FindValidSchemes()
         {
             
             foreach (var intervalOption in Configuration.AllowedIntervals)
             {
-                var firstNote = Music.Melody.FirstOrDefault(n => n.IsFirst);
-                var option = new HarmonisedNoteOption(firstNote, intervalOption);
+                var firstTone = Music.Melody.FirstOrDefault(n => n.IsFirst);
+                var option = new ToneCipherOption(firstTone, intervalOption);
 
                 if (!Music.Key.GetScale().Contains(option.Bass.PitchClass))
                 {
                     continue;
                 }
 
-                Music.BassOptions.Add(option);
-                var nextnote = Music.Melody.GetNextNote(firstNote);
-                FindHarmoniesForNote(nextnote, option);
-            }
-            
+                var nextTone = Music.Melody.GetNextTone(firstTone);
+                FindValidCipherForTone(nextTone, option);
+            }   
         }
 
-        private void FindHarmoniesForNote(Note note, HarmonisedNoteOption previous)
+        // soprano, alto, tenor harmonisations
+        public void GenerateMusicFromSchemes()
+        {
+            foreach (var cipherScheme in Music.CipherSchemes)
+            {
+                // initialise variant
+                var variant = new Composition(Music.Key, Music.Meter);
+                variant.AddVoice("Melody", Music.Melody);
+
+                // generate bassLine
+                var bassLine = new Melody();
+
+                Tone previousBassTone;
+
+                foreach (var cipheredTone in cipherScheme)
+                {
+                    var bassTone = cipheredTone.GetBassTone();
+
+                    // if difference greater then... then octave leap
+                    // except: outside boundaries (too close to melody / too low)
+
+                    bassLine.Add(previousBassTone = bassTone);
+
+                    
+                }
+                
+                variant.AddVoice("Bass", bassLine);
+
+                // fill in chords
+
+                // add variant
+                Music.Harmonisations.Add(variant)
+            }
+        }
+
+        private void FindValidCipherForTone(Tone tone, ToneCipherOption previous)
         {
             foreach (var intervalOption in Configuration.AllowedIntervals)
             {
-                if (!Configuration.AllowParallells && previous.Distance == intervalOption)
+                // check consecutives
+                if (!Configuration.AllowConsecutives 
+                    && tone.Pitch != previous.Pitch
+                    && previous.Distance.DiatonicDistance == intervalOption.DiatonicDistance)
                 {
                     continue;
                 }
 
-                // check bedekte parallel
-                if (!Configuration.AllowHiddenParallells)
+                // check hidden consecutives
+                if (!Configuration.AllowHiddenConsecutives
+                    && tone.Pitch != previous.Pitch)
                 {
                     var prePrevious = previous.GetFirstWithSameBass();
 
-                    if (prePrevious.Distance == intervalOption)
+                    if (prePrevious.Distance.DiatonicDistance == intervalOption.DiatonicDistance)
                     {
                         continue;
                     }
                 }
 
-                var option = new HarmonisedNoteOption(note, intervalOption);
+                var option = new ToneCipherOption(tone, intervalOption);
+                var scale = Music.Key.GetScale();
 
-                if (!Music.Key.GetScale().Contains(option.Bass.PitchClass))
+                // bass should be in scale
+                if (!option.Bass.IsInScale(scale))
+                {
+                    continue;
+                }
+
+                // fifth of bass should be in scale
+                if (!option.Bass.Add("P5").IsInScale(scale))
                 {
                     continue;
                 }
 
                 // from here: valid, we add it as an option
                 var validOption = previous.AddAsNextNoteOption(option);
-                var nextNote = Music.Melody.GetNextNote(note);
+                var nextNote = Music.Melody.GetNextTone(tone);
 
-                if (nextNote == null) // end of melody, success!
+                if (nextNote != null)
                 {
-                    Music.AddHarmonisation(validOption);
+                    // go on with next note
+                    FindValidCipherForTone(nextNote, validOption);
                 }
-                else
+                else // end of melody
                 {
-                    FindHarmoniesForNote(nextNote, validOption);
+                    if (Configuration.FinishOnTonicOrDominantOnly
+                        && option.Bass.PitchClass != Music.Key.Tonic
+                        && option.Bass.PitchClass != Music.Key.Dominant)
+                    {
+                        // no valid harmonisation
+                        continue;
+                    }
+
+                    // success
+                    Music.AddCipheredMelody(validOption);
                 }
-                
             }
         }
 
-
-        //function getNextChords(positionHarmony)
-        //        {
-        //            var foundone = false;
-        //            foreach (var option in options) // 8, 5, of 3
-        //            {
-
-
-        //                if () // geen bedekte parallel. als vorige akkoord zelfde is als daarvoor, ook niet zelfde option als voorvorige nemen. Telt ook door: voor-vorige...
-        //                {
-        //                    continue;
-        //                }
-
-        //                if () // geen sprongen in dezelfde richting: dan alleen 3 toegestaan.
-        //                {
-        //                    continue;
-        //                }
-
-        //                if () // laatste harmonie: alleen akkoord op I of V toestaan.
-        //                {
-        //                    continue;
-        //                }
-        //                if () // geen eindeloze herhalingen: als pendel abab is geweest, geen a meer toestaan.
-        //                {
-        //                    continue;
-        //                }
-        //                foundone = true;
-        //                positionHarmony.Add(option);
-
-        //                if (is last chord)
-        //                {
-        //                    register sequence as option
-        //                }
-        //                else
-        //                {
-        //                    getChords(positionHarmony.Next());
-        //                }
-
-        //            }
-
-        //            if (foundone == false)
-        //            {
-        //                positionHarmony.Remove();    // dead end.
-        //            }
-
-
-        //        }
-
         //        voorbeeld. 12 vd 48 opties.
-        //- VII trap toestaan??? alleen in 1e omkering.let op bastoon en parallellen.
-        //- bij melodiesprong geen sekundgang bas in zelfde richting of sprong in bas naar 8 of 5
 
         //f 8F              5Bb                    3d-
         //c 5F  3a-         8C?        3a-         8C             5F-

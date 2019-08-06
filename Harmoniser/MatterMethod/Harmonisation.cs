@@ -5,8 +5,8 @@ using System.Text;
 
 namespace DeParnasso.Harmoniser.MatterMethod
 {
-    public class Harmonisation : List<HarmonisedNote>
+    public class CipheredMelody : List<CipheredTone>
     {
-
+        
     }
 }
