@@ -16,7 +16,7 @@ namespace DeParnasso.Harmoniser.MatterMethod
 
         public CipheredTone(Tone note, Interval intervalToBass)
         {
-            Bass = note.Pitch.Subtract(intervalToBass);
+            Bass = note.Pitch.Add(-intervalToBass);
             Duration = note.Duration;
             Pitch = note.Pitch;
             StartPosition = note.StartPosition;

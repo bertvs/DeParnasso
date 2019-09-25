@@ -7,6 +7,8 @@ namespace DeParnasso.Terminal
     {
         // maak melodie van bas
         // vul andere harmonieën in
+
+        // replace subtract with add with negative number
         
         // export to .ly file (worker.getharmonisations)
 
@@ -55,9 +57,7 @@ namespace DeParnasso.Terminal
                 var command = Console.ReadLine();
 
                 if (command.ToLower() == "exit")
-                {
                     break;
-                }
 
                 var task = taskList.SingleOrDefault(m => m.Name.ToLower() == command);
 

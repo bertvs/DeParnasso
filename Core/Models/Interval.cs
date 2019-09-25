@@ -23,8 +23,8 @@ namespace DeParnasso.Core.Models
                 Semitones = semitones;
                 IsPure = isPure;
             }
-			public override string ToString() => Name;
-			
+            public override string ToString() => Name;
+
             public static IntervalNumber UNISON => new IntervalNumber("Unison", 1, 0, true);
             public static IntervalNumber SECOND => new IntervalNumber("Second", 2, 2, false);
             public static IntervalNumber THIRD => new IntervalNumber("Third", 3, 4, false);
@@ -35,16 +35,16 @@ namespace DeParnasso.Core.Models
             public static IntervalNumber OCTAVE => new IntervalNumber("Octave", 8, 12, true);
 
             public static List<IntervalNumber> ALL => new List<IntervalNumber>
-			{
-				UNISON,
-				SECOND,
-				THIRD,
-				FOURTH,
-				FIFTH,
-				SIXTH,
-				SEVENTH,
-				OCTAVE
-			};
+            {
+                UNISON,
+                SECOND,
+                THIRD,
+                FOURTH,
+                FIFTH,
+                SIXTH,
+                SEVENTH,
+                OCTAVE
+            };
         }
 
         private class IntervalQuality
@@ -62,9 +62,9 @@ namespace DeParnasso.Core.Models
                 IsConsonant = isConsonant;
             }
 
-			public override string ToString() => Name;
-			
-			public static IntervalQuality DIMINISHED_MINOR => new IntervalQuality("diminished", -2, false, false);
+            public override string ToString() => Name;
+
+            public static IntervalQuality DIMINISHED_MINOR => new IntervalQuality("diminished", -2, false, false);
             public static IntervalQuality MINOR => new IntervalQuality("minor", -1, false, true);
             public static IntervalQuality MAJOR => new IntervalQuality("Major", 0, false, true);
             public static IntervalQuality AUGMENTED_MAJOR => new IntervalQuality("Augmented", 1, false, false);
@@ -92,66 +92,98 @@ namespace DeParnasso.Core.Models
             }
         }
 
-        private IntervalNumber Number { get; set; }
-        private IntervalQuality Quality { get; set; }
-
-		public virtual ushort IntervalClass => (ushort)(Number.Semitones + Quality.Alteration);
-		public bool IsPure => (Quality == IntervalQuality.PERFECT);
-		public bool IsConsonant => (Quality.IsConsonant);
-		public int DiatonicDistance => Number.DiatonicNumber - 1;
-
-		public Interval(int diatonicDistance, int intervalClass)
-		{
-			Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.DiatonicNumber - 1 == diatonicDistance);
-
-			if (Number == null)
-			{
-				throw new InvalidOperationException($"No IntervalNumber found for diatonic distance {diatonicDistance}");
-			}
-			Quality = IntervalQuality.Factory(Number, intervalClass);
-
-			if (Quality == null)
-			{
-				Init((ushort)Math.Abs(intervalClass));
-			}
-		}
-
-        public Interval(ushort intervalClass)
+        public enum IntervalDirection
         {
-			Init(intervalClass);
+            Down = 0,
+            Up = 1
         }
 
-		private void Init(ushort intervalClass)
-		{
-			if (intervalClass > 12)
-			{
-				throw new InvalidOperationException("Interval class value exceeds 12.");
-			}
+        private IntervalNumber Number { get; set; }
+        private IntervalQuality Quality { get; set; }
+        private IntervalDirection Direction = IntervalDirection.Up;
 
-			// first try pure or major intervals
-			Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.Semitones == intervalClass);
+        public virtual int IntervalClass => Direction == IntervalDirection.Down ? -1 * (Number.Semitones + Quality.Alteration) : Number.Semitones + Quality.Alteration;
+        public bool IsPure => (Quality == IntervalQuality.PERFECT);
+        public bool IsConsonant => (Quality.IsConsonant);
+        public int DiatonicDistance => Direction == IntervalDirection.Down ? -1 * (Number.DiatonicNumber - 1) : Number.DiatonicNumber - 1;
 
-			// then try minor or diminished (only fifth) intervals
-			if (Number == null)
-			{
-				Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.Semitones - 1 == intervalClass);
-			}
+        private Interval() { }
 
-			Quality = IntervalQuality.Factory(Number, intervalClass);
-		}
+        public Interval(int diatonicDistance, int intervalClass)
+        {
+            if (intervalClass > 12)
+                throw new InvalidOperationException("Interval class value exceeds 12.");
+
+            if (diatonicDistance < 0)
+            {
+                Direction = IntervalDirection.Down;
+                diatonicDistance *= -1;
+                intervalClass *= -1;
+            }
+
+            Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.DiatonicNumber - 1 == diatonicDistance);
+
+            if (Number == null)
+                throw new InvalidOperationException($"No IntervalNumber found for diatonic distance {diatonicDistance}");
+
+            Quality = IntervalQuality.Factory(Number, intervalClass);
+
+            if (Quality == null)
+                Init(intervalClass);
+        }
+
+        public Interval(int intervalClass)
+        {
+            Init(intervalClass);
+        }
+
+        private void Init(int intervalClass)
+        {
+            if (intervalClass < 0)
+            {
+                Direction = IntervalDirection.Down;
+                intervalClass = Math.Abs(intervalClass);
+            }
+
+            if (intervalClass > 12)
+                throw new InvalidOperationException("Interval class value exceeds 12.");
+
+            // first try pure or major intervals
+            Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.Semitones == intervalClass);
+
+            // then try minor or diminished (only fifth) intervals
+            if (Number == null)
+                Number = IntervalNumber.ALL.SingleOrDefault(inr => inr.Semitones - 1 == intervalClass);
+
+            Quality = IntervalQuality.Factory(Number, intervalClass);
+        }
 
         public Interval(string input)
         {
+            if (input[0] == '-')
+            {
+                Direction = IntervalDirection.Down;
+                input = input.TrimStart('-');
+            }
+
             var number = IntervalNumber.ALL.SingleOrDefault(inr => inr.DiatonicNumber == input[1].ToInt());
+
+            if (number == null)
+                throw new InvalidCastException($"Could not parse '{input}' to type Interval");
+
             var quality = IntervalQuality.ALL.SingleOrDefault(iq => iq.ForPure == number.IsPure && iq.Name[0] == input[0]);
 
-            Number = number ?? throw new InvalidCastException($"Could not parse '{input}' to type Interval");
+            Number = number;
             Quality = quality ?? throw new InvalidCastException($"Could not parse '{input}' to type Interval");
         }
-        
+
         public override string ToString()
         {
             var sb = new StringBuilder();
+
+            if (Direction == IntervalDirection.Down)
+                sb.Append("-");
+
             sb.Append(Quality.Name.Substring(0, 1));
             sb.Append(Number.DiatonicNumber);
             return sb.ToString();
@@ -164,6 +196,16 @@ namespace DeParnasso.Core.Models
             Quality = simple.Quality;
         }
 
+        public Interval Revert()
+        {
+            return new Interval
+            {
+                Direction = Direction == IntervalDirection.Up ? IntervalDirection.Down : IntervalDirection.Up,
+                Number = Number,
+                Quality = Quality
+            };
+        }
+
         public bool Equals(Interval other)
         {
             return (other.ToString() == ToString());
@@ -172,9 +214,7 @@ namespace DeParnasso.Core.Models
         public override bool Equals(object obj)
         {
             if (obj == null || !(obj is Interval))
-            {
                 return false;
-            }
 
             return Equals((Interval)obj);
         }
@@ -182,10 +222,12 @@ namespace DeParnasso.Core.Models
         public override int GetHashCode() => Convert.ToInt32((Number.Semitones ^ Quality.Alteration) & 0xFFFFFFFF);
 
         public static implicit operator Interval(ushort value) { return new Interval(value); }
-        public static explicit operator ushort(Interval value) { return value.IntervalClass; }
+        public static explicit operator int(Interval value) { return value.IntervalClass; }
 
         public static bool operator ==(Interval int1, Interval int2) { return int1.Equals(int2); }
         public static bool operator !=(Interval int1, Interval int2) { return (!int1.Equals(int2)); }
+
+        public static Interval operator -(Interval interval) { return interval.Revert(); }
 
     }
 }

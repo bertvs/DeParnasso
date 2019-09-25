@@ -8,22 +8,40 @@ namespace DeParnasso.Core.Models
     {
         public Pitch Pitch { get; set; }
 
-		public static string RegexString => Pitch.RegexString + DurationRegex;
+        public Tone() { }
 
-		public Tone() { }
+        public Tone(string input)
+        {
+            var regexResult = Regex.Match(input, RegexString);
 
-		public Tone(string input)
-		{
-			var regexResult = Regex.Match(input, RegexString);
+            if (!regexResult.Success)
+            {
+                throw new InvalidCastException($"Could not parse '{input}' to type Tone");
+            }
 
-			if (!regexResult.Success)
-			{
-				throw new InvalidCastException($"Could not parse '{input}' to type Tone");
-			}
+            Pitch = new Pitch(regexResult.Groups[1].Value);
+            ParseDurationFromString(regexResult.Groups[6].Value);
+        }
 
-			Pitch = new Pitch(regexResult.Groups[1].Value);
-			ParseDurationFromString(regexResult.Groups[6].Value);
-		}
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(Pitch.ToString());
+            sb.Append(DurationToString());
+            return sb.ToString();
+        }
+
+        public string ToLyString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(Pitch.ToLyString());
+            sb.Append(DurationToString());
+            return sb.ToString();
+        }
+
+        public Interval Difference(Tone other, bool octaveNeutral = false, bool absolute = false) => Pitch.Difference(other.Pitch, octaveNeutral, absolute);
+
+        public Tone Add(String interval) => new Tone { Pitch = Pitch.Add(interval), Duration = Duration, StartPosition = StartPosition };
 
 		public Tone Transpose(string interval) => Transpose(new Interval(interval));
 		
@@ -33,21 +51,5 @@ namespace DeParnasso.Core.Models
 			Pitch = Pitch.Add(interval);
 			return newNote;
 		}
-
-		public override string ToString()
-		{
-			var sb = new StringBuilder();
-			sb.Append(Pitch.ToString());
-			sb.Append(base.ToString());
-			return sb.ToString();
-		}
-
-		public string ToLyString()
-		{
-			var sb = new StringBuilder();
-			sb.Append(Pitch.ToLyString());
-			sb.Append(base.ToString());
-			return sb.ToString();
-		}
-	}
+    }
 }

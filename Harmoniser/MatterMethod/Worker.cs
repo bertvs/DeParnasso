@@ -74,18 +74,20 @@ namespace DeParnasso.Harmoniser.MatterMethod
                 // generate bassLine
                 var bassLine = new Melody();
 
-                Tone previousBassTone;
+                var previousBassTone = default(Tone);
 
                 foreach (var cipheredTone in cipherScheme)
                 {
                     var bassTone = cipheredTone.GetBassTone();
 
-                    // if difference greater then... then octave leap
-                    // except: outside boundaries (too close to melody / too low)
+                    if (previousBassTone != default(Tone))
+                    {
+                        bassTone.Pitch = bassTone.Pitch.GetClosestFromPitchClass(previousBassTone.Pitch);
+
+                        // except: outside boundaries (too close to melody / too low)
+                    }
 
                     bassLine.Add(previousBassTone = bassTone);
-
-                    
                 }
                 
                 variant.AddVoice("Bass", bassLine);
@@ -93,7 +95,7 @@ namespace DeParnasso.Harmoniser.MatterMethod
                 // fill in chords
 
                 // add variant
-                Music.Harmonisations.Add(variant)
+                Music.Harmonisations.Add(variant);
             }
         }
 

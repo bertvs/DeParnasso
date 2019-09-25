@@ -23,7 +23,21 @@ namespace DeParnasso.Terminal
         public bool TestMethod2()
         {
             Console.WriteLine("TestMethod2");
+            var tone1 = new Pitch("c'");
+            var tone2 = new Pitch("b'''");
+            var tone3 = tone2.GetClosestFromPitchClass(tone1);
+
+            var tone4 = tone1.BaseTone.GetPrevious();
+            var tone5 = tone2.BaseTone.GetNext();
+
             return false;
+        }
+
+        public bool TestPitch()
+        {
+            var pitch1 = new Pitch("C#");
+            var pitch2 = pitch1.Simplify();
+            return true;
         }
     }
 }

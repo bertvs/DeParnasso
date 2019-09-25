@@ -8,7 +8,7 @@ namespace DeParnasso.Core.Models
 {
     public sealed class Pitch : IEquatable<Pitch>
     {
-        private class NaturalNote : IEquatable<NaturalNote>
+        public class NaturalNote : IEquatable<NaturalNote>
         {
             public string Name { get; private set; }
             public string LatinName { get; private set; }
@@ -37,8 +37,14 @@ namespace DeParnasso.Core.Models
 
             public override int GetHashCode() => Convert.ToInt32((DiatonicNumber ^ Semitones) & 0xFFFFFFFF);
 
-            public static bool operator ==(NaturalNote naturalTone, Object other) { return naturalTone.Equals(other); }
-            public static bool operator !=(NaturalNote naturalTone, Object other) { return (!naturalTone.Equals(other)); }
+            public static bool operator ==(NaturalNote naturalNote, Object other)
+            {
+                if (ReferenceEquals(null, naturalNote))
+                    return ReferenceEquals(null, other);
+
+                return naturalNote.Equals(other);
+            }
+            public static bool operator !=(NaturalNote naturalNote, Object other) { return !(naturalNote == other); }
 
             public static NaturalNote C => new NaturalNote("C", "Do", 1, 0);
             public static NaturalNote D => new NaturalNote("D", "Re", 2, 2);
@@ -52,22 +58,16 @@ namespace DeParnasso.Core.Models
 
             public NaturalNote GetNext()
             {
-                var nextValue = DiatonicNumber + 1;
-                if (nextValue == 12)
-                {
-                    nextValue = 0;
-                }
-                return ALL.SingleOrDefault(next => next.DiatonicNumber == nextValue);
+                var nextValue = (DiatonicNumber + 1) % 7;
+
+                return ALL.SingleOrDefault(next => next.DiatonicNumber % 7 == nextValue);
             }
 
             public NaturalNote GetPrevious()
             {
-                var previousValue = DiatonicNumber - 1;
-                if (previousValue == -1)
-                {
-                    previousValue = 11;
-                }
-                return ALL.SingleOrDefault(previous => previous.DiatonicNumber == previousValue);
+                var previousValue = ((DiatonicNumber - 1) % 7 + 7) % 7;
+
+                return ALL.SingleOrDefault(previous => previous.DiatonicNumber % 7 == previousValue);
             }
         }
 
@@ -122,11 +122,11 @@ namespace DeParnasso.Core.Models
         }
 
 		public static string BaseToneRegex => @"([a-hA-H])";
-		public static string AlterationRegex => @"(is{1,2}|e?s(es)?|b{1,2}|#|\*|)";
+		public static string AlterationRegex => @"(is(is)?|e?s(es)?|b{1,2}|#|\*|)";
 		public static string OctaveRegex => @"('*)";
 		public static string RegexString => "(" + BaseToneRegex + AlterationRegex + OctaveRegex + ")";
 
-		private NaturalNote BaseTone { get; set; }
+		public NaturalNote BaseTone { get; set; }
         private Accidental Alteration { get; set; }
         public ushort Octave { get; private set; }
         public Pitch PitchClass => new Pitch { BaseTone = BaseTone, Alteration = Alteration };
@@ -134,6 +134,7 @@ namespace DeParnasso.Core.Models
 		public bool IsNatural => (Alteration == Accidental.NATURAL);
 		public bool IsSharp => (Alteration == Accidental.SHARP || Alteration == Accidental.DOUBLE_SHARP);
 		public bool IsFlat => (Alteration == Accidental.FLAT || Alteration == Accidental.DOUBLE_FLAT);
+        public int DiatonicPosition => BaseTone.DiatonicNumber + Octave * 7;
 
         private Pitch() { }
 
@@ -147,9 +148,7 @@ namespace DeParnasso.Core.Models
 			var regexResult = Regex.Match(input, RegexString);
 
 			if (!regexResult.Success)
-			{
 				throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
-			}
 
 			var baseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Name.ToLower() == regexResult.Groups[2].Value.ToLower());
 			
@@ -166,7 +165,7 @@ namespace DeParnasso.Core.Models
         {
 			var semitoneDifference = (value % 12) - baseTone.Semitones;
 			var nearestOctaveValue = (int)(Math.Round((decimal)semitoneDifference / 12) * 12);
-			semitoneDifference = semitoneDifference - nearestOctaveValue;
+			semitoneDifference -= nearestOctaveValue;
 			Alteration = Accidental.ALL.SingleOrDefault(acc => acc.SemitoneDifference == semitoneDifference);
 
 			if (Alteration == null)
@@ -202,9 +201,8 @@ namespace DeParnasso.Core.Models
         public override bool Equals(object obj)
         {
             if (obj == null || !(obj is Pitch))
-            {
                 return false;
-            }
+
             return Equals((Pitch)obj);
         }
 
@@ -238,10 +236,10 @@ namespace DeParnasso.Core.Models
         public ushort ToInt()
         {
             var intval = (Octave * 12) + BaseTone.Semitones + Alteration.SemitoneDifference;
+
             if (intval < 0)
-            {
                 throw new InvalidCastException("Pitch too low!");
-            }
+
             return (ushort)intval;
         }
 
@@ -249,68 +247,76 @@ namespace DeParnasso.Core.Models
 
         public bool IsInScale(List<Pitch> scale) => (scale.Select(pitch => pitch.PitchClass).Contains(PitchClass));
 
-        public void Simplify()
+        public Pitch Simplify()
         {
-            var simple = new Pitch((ushort)this);
-            BaseTone = simple.BaseTone;
-            Alteration = simple.Alteration;
-            Octave = simple.Octave;
+            return new Pitch((ushort)this);
         }
 
-        public Pitch Add(ushort interval) => (ushort)(interval + ToInt());
+        public Pitch Add(int interval)
+        {
+            var intValue = ToInt();
+
+            if (intValue < -interval)
+                throw new InvalidOperationException("Interval to subtract is too large!");
+
+            return (ushort)(intValue + interval);
+        }
 
         public Pitch Add(Interval interval)
         {
+            ushort intValue = ToInt();
+            var intervalInSemitones = (int)interval;
+
+            if (intValue < -intervalInSemitones)
+                throw new InvalidOperationException("Interval to subtract is too large!");
+
             var newBaseTone = NaturalNote.ALL.SingleOrDefault(nt =>
-                (nt.DiatonicNumber % 7) == (BaseTone.DiatonicNumber + interval.DiatonicDistance) % 7);
-            var newPitchValue = (ushort)((ushort)interval + ToInt());
+                (nt.DiatonicNumber % 7) == ((BaseTone.DiatonicNumber + interval.DiatonicDistance) % 7 + 7) % 7);
+
+            var newPitchValue = (ushort)(intValue + intervalInSemitones);
             return new Pitch(newBaseTone, newPitchValue);
         }
 
 		public Pitch Add(string interval) => Add(new Interval(interval));
 		
-        public Pitch Subtract(ushort interval)
-        {
-            var intValue = ToInt();
-            if (intValue < interval)
-            {
-                throw new InvalidOperationException("Interval to subtract is too large!");
-            }
-            return (ushort)(intValue - interval);
-        }
-
-        public Pitch Subtract(Interval interval)
-        {
-			ushort intValue = ToInt();
-			var semitonesToSubtract = (ushort)interval;
-
-			if (intValue < semitonesToSubtract)
-			{
-				throw new InvalidOperationException("Interval to subtract is too large!");
-			}
-
-			var newBaseTone = NaturalNote.ALL.SingleOrDefault(nt =>
-				(nt.DiatonicNumber % 7) == ((BaseTone.DiatonicNumber - interval.DiatonicDistance) % 7 + 7) % 7);
-			var newPitchValue = (ushort)(intValue - semitonesToSubtract);
-			return new Pitch(newBaseTone, newPitchValue);
-		}
-
-		public Pitch Subtract(string interval) => Subtract(new Interval(interval));
-		
-        public Interval Difference(Pitch other)
+        public Interval Difference(Pitch other, bool octaveNeutral = false, bool absolute = false)
         {
 			var pitchDifference = (ToInt() - other.ToInt());
-			var octaveDifference = (ushort)(pitchDifference / 12);
-			other.Octave += octaveDifference;
-			pitchDifference = (ToInt() - other.ToInt());
-			var diatonicDistance = BaseTone.DiatonicNumber - other.BaseTone.DiatonicNumber;
 
-			if (diatonicDistance < 0)
-			{
-				return other.Difference(this);
-			}
+            if (octaveNeutral)
+            {
+                var octaveDifference = (ushort)(pitchDifference / 12);
+                other.Octave += octaveDifference;
+                pitchDifference = (ToInt() - other.ToInt());
+            }
+            else if (Math.Abs(pitchDifference) > 12)
+            {
+                throw new InvalidOperationException("Pitches are more than one octave apart!");
+            }
+			
+			var diatonicDistance = DiatonicPosition - other.DiatonicPosition;
 
-			return new Interval(diatonicDistance, pitchDifference);
+            if (absolute && diatonicDistance < 0)
+                return other.Difference(this);
+
+            return new Interval(diatonicDistance, pitchDifference);
+        }
+
+        public Pitch GetClosestFromPitchClass(Pitch other)
+        {
+            // first move to the same octave
+            other.Octave = Octave;
+
+            // based on the difference, move one octave higher or lower
+            var diff = other.Difference(this, true, false);
+
+            if (diff.IntervalClass > 6)
+                return Add(diff).Add("-P8");
+
+            if (diff.IntervalClass < -6)
+                return Add(diff).Add("P8");
+
+            return Add(diff);
         }
 
         public bool IsPureTo(Pitch other) => Difference(other).IsPure;
