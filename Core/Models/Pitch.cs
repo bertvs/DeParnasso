@@ -8,7 +8,7 @@ namespace DeParnasso.Core.Models
 {
     public sealed class Pitch : IEquatable<Pitch>
     {
-        public class NaturalNote : IEquatable<NaturalNote>
+        public class NaturalNote
         {
             public string Name { get; private set; }
             public string LatinName { get; private set; }
@@ -24,37 +24,15 @@ namespace DeParnasso.Core.Models
             }
 			public override string ToString() => Name;
 
-            public bool Equals(NaturalNote other) => (DiatonicNumber == other.DiatonicNumber);
+            public static NaturalNote C = new NaturalNote("C", "Do", 1, 0);
+            public static NaturalNote D = new NaturalNote("D", "Re", 2, 2);
+            public static NaturalNote E = new NaturalNote("E", "Mi", 3, 4);
+            public static NaturalNote F = new NaturalNote("F", "Fa", 4, 5);
+            public static NaturalNote G = new NaturalNote("G", "Sol", 5, 7);
+            public static NaturalNote A = new NaturalNote("A", "La", 6, 9);
+            public static NaturalNote B = new NaturalNote("B", "Si", 7, 11);
 
-            public override bool Equals(object obj)
-            {
-                if (obj == null || !(obj is NaturalNote))
-                {
-                    return false;
-                }
-                return Equals((NaturalNote)obj);
-            }
-
-            public override int GetHashCode() => Convert.ToInt32((DiatonicNumber ^ Semitones) & 0xFFFFFFFF);
-
-            public static bool operator ==(NaturalNote naturalNote, Object other)
-            {
-                if (ReferenceEquals(null, naturalNote))
-                    return ReferenceEquals(null, other);
-
-                return naturalNote.Equals(other);
-            }
-            public static bool operator !=(NaturalNote naturalNote, Object other) { return !(naturalNote == other); }
-
-            public static NaturalNote C => new NaturalNote("C", "Do", 1, 0);
-            public static NaturalNote D => new NaturalNote("D", "Re", 2, 2);
-            public static NaturalNote E => new NaturalNote("E", "Mi", 3, 4);
-            public static NaturalNote F => new NaturalNote("F", "Fa", 4, 5);
-            public static NaturalNote G => new NaturalNote("G", "Sol", 5, 7);
-            public static NaturalNote A => new NaturalNote("A", "La", 6, 9);
-            public static NaturalNote B => new NaturalNote("B", "Si", 7, 11);
-
-            public static List<NaturalNote> ALL => new List<NaturalNote> { C, D, E, F, G, A, B };
+            public static List<NaturalNote> ALL = new List<NaturalNote> { C, D, E, F, G, A, B };
 
             public NaturalNote GetNext()
             {
@@ -71,7 +49,7 @@ namespace DeParnasso.Core.Models
             }
         }
 
-        private class Accidental : IEquatable<Accidental>
+        private class Accidental
         {
             public string Name { get; private set; }
             public string Notation { get; private set; }
@@ -87,31 +65,14 @@ namespace DeParnasso.Core.Models
                 SemitoneDifference = alteration;
             }
 			public override string ToString() => Name;
+            
+            public static Accidental DOUBLE_FLAT = new Accidental("Double flat", "bb", "eses", -2);
+            public static Accidental FLAT = new Accidental("Flat", "b", "es", -1);
+            public static Accidental NATURAL = new Accidental("Natural", "", "", 0);
+            public static Accidental SHARP = new Accidental("Sharp", "#", "is", 1);
+            public static Accidental DOUBLE_SHARP = new Accidental("Double sharp", "*", "isis", 2);
 
-            public bool Equals(Accidental other) => (Notation == other.Notation);
-
-            public override bool Equals(object obj)
-            {
-                if (obj == null || !(obj is Accidental))
-                {
-                    return false;
-                }
-                return Equals((Accidental)obj);
-            }
-
-            public override int GetHashCode() => Convert.ToInt32((SemitoneDifference ^ Name.Count()) & 0xFFFFFFFF);
-
-            public static bool operator ==(Accidental accidental, Object other) { return accidental.Equals(other); }
-            public static bool operator !=(Accidental accidental, Object other) { return (!accidental.Equals(other)); }
-
-
-            public static Accidental DOUBLE_FLAT => new Accidental("Double flat", "bb", "eses", -2);
-            public static Accidental FLAT => new Accidental("Flat", "b", "es", -1);
-            public static Accidental NATURAL => new Accidental("Natural", "", "", 0);
-            public static Accidental SHARP => new Accidental("Sharp", "#", "is", 1);
-            public static Accidental DOUBLE_SHARP => new Accidental("Double sharp", "*", "isis", 2);
-
-            public static List<Accidental> ALL => new List<Accidental>
+            public static List<Accidental> ALL = new List<Accidental>
             {
                 DOUBLE_FLAT,
                 FLAT,
@@ -121,10 +82,10 @@ namespace DeParnasso.Core.Models
             };
         }
 
-		public static string BaseToneRegex => @"([a-hA-H])";
-		public static string AlterationRegex => @"(is(is)?|e?s(es)?|b{1,2}|#|\*|)";
-		public static string OctaveRegex => @"('*)";
-		public static string RegexString => "(" + BaseToneRegex + AlterationRegex + OctaveRegex + ")";
+		public static string BaseToneRegex = @"([a-hA-H])";
+		public static string AlterationRegex = @"(is(is)?|e?s(es)?|b{1,2}|#|\*|)";
+		public static string OctaveRegex = @"('*)";
+		public static string RegexString = "(" + BaseToneRegex + AlterationRegex + OctaveRegex + ")";
 
 		public NaturalNote BaseTone { get; set; }
         private Accidental Alteration { get; set; }
@@ -175,7 +136,7 @@ namespace DeParnasso.Core.Models
 			}
 
 			BaseTone = baseTone;
-			Octave = (ushort)((value - BaseTone.Semitones + Alteration.SemitoneDifference) / 12);
+			Octave = (ushort)((value - Alteration.SemitoneDifference) / 12);
 		}
 
 		private void Init(uint value)

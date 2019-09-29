@@ -1,5 +1,7 @@
 using DeParnasso.Core.Models;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace DeParnasso.Core.Tests
 {
@@ -140,64 +142,202 @@ namespace DeParnasso.Core.Tests
             }
         }
 
+        private class PitchTestSet
+        {
+            public string BasePitch { get; set; }
+            public string Difference { get; set; }
+            public string ModifiedPitch { get; set; }
+        }
+
         [TestMethod]
         public void TestAddIntervals()
         {
+            var testSets = new List<PitchTestSet>()
+            {
+                new PitchTestSet
+                {
+                    BasePitch = "c",
+                    Difference = "P1",
+                    ModifiedPitch = "c"
+                },
+                new PitchTestSet
+                {
+                    BasePitch = "c",
+                    Difference = "A1",
+                    ModifiedPitch = "c#"
+                },
+            };
+
+
+            foreach (var pitchTestSet in testSets)
+            {
+                var basePitch = new Pitch(pitchTestSet.BasePitch);
+                var difference = new Interval(pitchTestSet.Difference);
+                var modifiedPitch = basePitch.Add(difference);
+                Assert.AreEqual(modifiedPitch, new Pitch(pitchTestSet.ModifiedPitch));
+                Assert.AreEqual(modifiedPitch.Difference(basePitch), difference);
+            }
+
             var pitch1 = new Pitch("c");
-            var pitch2 = pitch1.Add("P1");
+            var interval = new Interval("P1");
+            var pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("c"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("A1");
+            interval = new Interval("A1");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("c#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("d2");
+            interval = new Interval("d2");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("dbb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("m2");
+            interval = new Interval("m2");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("db"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("M2");
+            interval = new Interval("M2");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("d"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("A2");
+            interval = new Interval("A2");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("d#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("d3");
+            interval = new Interval("d3");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("ebb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("d4");
+            interval = new Interval("d4");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("fb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
+            interval = new Interval("P4");
             pitch2 = pitch1.Add("P4");
             Assert.AreEqual(pitch2, new Pitch("f"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("c");
-            pitch2 = pitch1.Add("A4");
+            interval = new Interval("A4");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("f#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("bbb");
-            pitch2 = pitch1.Add("A1");
+            interval = new Interval("A1");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("bb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("bbb");
-            pitch2 = pitch1.Add("m2");
-            Assert.AreEqual(pitch2, new Pitch("cbb"));
+            interval = new Interval("m2");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("cbb'"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
             pitch1 = new Pitch("bbb");
-            pitch2 = pitch1.Add("A3");
+            interval = new Interval("A3");
+            pitch2 = pitch1.Add(interval);
             Assert.AreEqual(pitch2, new Pitch("d'"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
         }
 
-        //test subtractintervals
+        [TestMethod]
+        public void TestSubtractIntervals()
+        {
+            var pitch1 = new Pitch("c'");
+            var interval = new Interval("-P1");
+            var pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("c'"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
 
-        // test diffs of two pitches
+            //@TODO Fix this one
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-A1");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("cb'"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-d2");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("b#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-m2");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("b"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-M2");
+            pitch2 = pitch1.Add("-M2");
+            Assert.AreEqual(pitch2, new Pitch("bb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-A2");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("bbb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-d3");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("a#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-d4");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("g#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-P4");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("g"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("c'");
+            interval = new Interval("-A4");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("gb"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("f*");
+            interval = new Interval("-A1");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("f#"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("f*");
+            interval = new Interval("-m2");
+            pitch2 = pitch1.Add("-m2");
+            Assert.AreEqual(pitch2, new Pitch("e*"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+
+            pitch1 = new Pitch("f*");
+            interval = new Interval("-A3");
+            pitch2 = pitch1.Add(interval);
+            Assert.AreEqual(pitch2, new Pitch("d"));
+            Assert.AreEqual(pitch2.Difference(pitch1), interval);
+        }
     }
 }

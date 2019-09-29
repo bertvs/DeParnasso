@@ -12,8 +12,6 @@ namespace DeParnasso.Terminal
         
         // export to .ly file (worker.getharmonisations)
 
-        // unittests
-
         // extra checks in matterharmoniser: 
         // - geen sprongen in dezelfde richting: dan alleen 3 toegestaan.
         // - geen eindeloze herhalingen: als pendel abab is geweest, geen a meer toestaan.

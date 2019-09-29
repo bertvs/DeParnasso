@@ -25,16 +25,16 @@ namespace DeParnasso.Core.Models
             }
             public override string ToString() => Name;
 
-            public static IntervalNumber UNISON => new IntervalNumber("Unison", 1, 0, true);
-            public static IntervalNumber SECOND => new IntervalNumber("Second", 2, 2, false);
-            public static IntervalNumber THIRD => new IntervalNumber("Third", 3, 4, false);
-            public static IntervalNumber FOURTH => new IntervalNumber("Fourth", 4, 5, true);
-            public static IntervalNumber FIFTH => new IntervalNumber("Fifth", 5, 7, true);
-            public static IntervalNumber SIXTH => new IntervalNumber("Sixth", 6, 9, false);
-            public static IntervalNumber SEVENTH => new IntervalNumber("Seventh", 7, 11, false);
-            public static IntervalNumber OCTAVE => new IntervalNumber("Octave", 8, 12, true);
+            public static IntervalNumber UNISON = new IntervalNumber("Unison", 1, 0, true);
+            public static IntervalNumber SECOND = new IntervalNumber("Second", 2, 2, false);
+            public static IntervalNumber THIRD = new IntervalNumber("Third", 3, 4, false);
+            public static IntervalNumber FOURTH = new IntervalNumber("Fourth", 4, 5, true);
+            public static IntervalNumber FIFTH = new IntervalNumber("Fifth", 5, 7, true);
+            public static IntervalNumber SIXTH = new IntervalNumber("Sixth", 6, 9, false);
+            public static IntervalNumber SEVENTH = new IntervalNumber("Seventh", 7, 11, false);
+            public static IntervalNumber OCTAVE = new IntervalNumber("Octave", 8, 12, true);
 
-            public static List<IntervalNumber> ALL => new List<IntervalNumber>
+            public static List<IntervalNumber> ALL = new List<IntervalNumber>
             {
                 UNISON,
                 SECOND,
@@ -64,15 +64,15 @@ namespace DeParnasso.Core.Models
 
             public override string ToString() => Name;
 
-            public static IntervalQuality DIMINISHED_MINOR => new IntervalQuality("diminished", -2, false, false);
-            public static IntervalQuality MINOR => new IntervalQuality("minor", -1, false, true);
-            public static IntervalQuality MAJOR => new IntervalQuality("Major", 0, false, true);
-            public static IntervalQuality AUGMENTED_MAJOR => new IntervalQuality("Augmented", 1, false, false);
-            public static IntervalQuality DIMINISHED => new IntervalQuality("diminished", -1, true, false);
-            public static IntervalQuality PERFECT => new IntervalQuality("Perfect", 0, true, true);
-            public static IntervalQuality AUGMENTED => new IntervalQuality("Augmented", 1, true, false);
+            public static IntervalQuality DIMINISHED_MINOR = new IntervalQuality("diminished", -2, false, false);
+            public static IntervalQuality MINOR = new IntervalQuality("minor", -1, false, true);
+            public static IntervalQuality MAJOR = new IntervalQuality("Major", 0, false, true);
+            public static IntervalQuality AUGMENTED_MAJOR = new IntervalQuality("Augmented", 1, false, false);
+            public static IntervalQuality DIMINISHED = new IntervalQuality("diminished", -1, true, false);
+            public static IntervalQuality PERFECT = new IntervalQuality("Perfect", 0, true, true);
+            public static IntervalQuality AUGMENTED = new IntervalQuality("Augmented", 1, true, false);
 
-            public static List<IntervalQuality> ALL => new List<IntervalQuality>
+            public static List<IntervalQuality> ALL = new List<IntervalQuality>
             {
                 DIMINISHED_MINOR,
                 MINOR,
@@ -175,6 +175,9 @@ namespace DeParnasso.Core.Models
 
             Number = number;
             Quality = quality ?? throw new InvalidCastException($"Could not parse '{input}' to type Interval");
+
+            if (Number == IntervalNumber.UNISON && Quality == IntervalQuality.PERFECT)
+                Direction = IntervalDirection.Up;
         }
 
         public override string ToString()
@@ -208,7 +211,7 @@ namespace DeParnasso.Core.Models
 
         public bool Equals(Interval other)
         {
-            return (other.ToString() == ToString());
+            return (Direction == other.Direction && Number == other.Number && Quality == other.Quality);
         }
 
         public override bool Equals(object obj)
