@@ -12,7 +12,7 @@ namespace DeParnasso.Harmoniser.MatterMethod
         public Worker(Configuration configuration, Composition music)
         {
             Configuration = configuration;
-            Music = new MatterComposition(music);
+            Music = MatterComposition.ConvertFromComposition(music);
         }
 
         public void Execute()

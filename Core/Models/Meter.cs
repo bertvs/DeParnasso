@@ -11,6 +11,15 @@ namespace DeParnasso.Core.Models
         public ushort BeatsPerBar { get; set; }
         public ushort BeatUnit { get; set; }
 
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(BeatsPerBar);
+            sb.Append('/');
+            sb.Append(BeatUnit);
+            return sb.ToString();
+        }
+
         public Meter(ushort beatsPerBar, ushort beatUnit)
         {
             BeatsPerBar = beatsPerBar;
@@ -28,15 +37,6 @@ namespace DeParnasso.Core.Models
 
             BeatsPerBar = Convert.ToUInt16(regexResult.Groups[1].Value);
             BeatUnit = Convert.ToUInt16(regexResult.Groups[3].Value);
-        }
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            sb.Append(BeatsPerBar);
-            sb.Append('/');
-            sb.Append(BeatUnit);
-            return sb.ToString();
         }
     }
 }

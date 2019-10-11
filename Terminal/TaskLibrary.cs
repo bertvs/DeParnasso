@@ -27,8 +27,6 @@ namespace DeParnasso.Terminal
             var tone2 = new Pitch("b'''");
             var tone3 = tone2.GetClosestFromPitchClass(tone1);
 
-            var tone4 = tone1.BaseTone.GetPrevious();
-            var tone5 = tone2.BaseTone.GetNext();
 
             return false;
         }

@@ -12,10 +12,13 @@ namespace DeParnasso.Harmoniser.MatterMethod
         public List<Composition> Harmonisations = new List<Composition>();
         public Melody Melody => Voices.FirstOrDefault().Melody;
         public MatterComposition(Key key, Meter meter) : base(key, meter) { }
-        
-        public MatterComposition(Composition composition) : this(composition.Key, composition.Meter)
+
+        public static MatterComposition ConvertFromComposition(Composition composition)
         {
-            Voices = composition.Voices;
+            return new MatterComposition(composition.Key, composition.Meter)
+            { 
+                Voices = composition.Voices,
+            };
         }
 
         public void AddCipheredMelody(ToneCipherOption lastNoteOption)

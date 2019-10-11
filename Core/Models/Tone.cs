@@ -20,7 +20,7 @@ namespace DeParnasso.Core.Models
             }
 
             Pitch = new Pitch(regexResult.Groups[1].Value);
-            ParseDurationFromString(regexResult.Groups[6].Value);
+            ParseDurationFromString(regexResult.Groups[7].Value);
         }
 
         public override string ToString()

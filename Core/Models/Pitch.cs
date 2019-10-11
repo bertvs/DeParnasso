@@ -8,7 +8,7 @@ namespace DeParnasso.Core.Models
 {
     public sealed class Pitch : IEquatable<Pitch>
     {
-        public class NaturalNote
+        private class NaturalNote
         {
             public string Name { get; private set; }
             public string LatinName { get; private set; }
@@ -33,20 +33,6 @@ namespace DeParnasso.Core.Models
             public static NaturalNote B = new NaturalNote("B", "Si", 7, 11);
 
             public static List<NaturalNote> ALL = new List<NaturalNote> { C, D, E, F, G, A, B };
-
-            public NaturalNote GetNext()
-            {
-                var nextValue = (DiatonicNumber + 1) % 7;
-
-                return ALL.SingleOrDefault(next => next.DiatonicNumber % 7 == nextValue);
-            }
-
-            public NaturalNote GetPrevious()
-            {
-                var previousValue = ((DiatonicNumber - 1) % 7 + 7) % 7;
-
-                return ALL.SingleOrDefault(previous => previous.DiatonicNumber % 7 == previousValue);
-            }
         }
 
         private class Accidental
@@ -87,7 +73,12 @@ namespace DeParnasso.Core.Models
 		public static string OctaveRegex = @"('*)";
 		public static string RegexString = "(" + BaseToneRegex + AlterationRegex + OctaveRegex + ")";
 
-		public NaturalNote BaseTone { get; set; }
+        public static bool operator ==(Pitch pitch, Object other) { return pitch.Equals(other); }
+        public static bool operator !=(Pitch pitch, Object other) { return (!pitch.Equals(other)); }
+        public static implicit operator Pitch(ushort value) { return new Pitch(value); }
+        public static explicit operator ushort(Pitch value) { return value.ToInt(); }
+
+        private NaturalNote BaseTone { get; set; }
         private Accidental Alteration { get; set; }
         public ushort Octave { get; private set; }
         public Pitch PitchClass => new Pitch { BaseTone = BaseTone, Alteration = Alteration };
@@ -97,65 +88,7 @@ namespace DeParnasso.Core.Models
 		public bool IsFlat => (Alteration == Accidental.FLAT || Alteration == Accidental.DOUBLE_FLAT);
         public int DiatonicPosition => BaseTone.DiatonicNumber + Octave * 7;
 
-        private Pitch() { }
-
-		public Pitch(uint value)
-        {
-			Init(value);
-        }
-
-		public Pitch(string input)
-		{
-			var regexResult = Regex.Match(input, RegexString);
-
-			if (!regexResult.Success)
-				throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
-
-			var baseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Name.ToLower() == regexResult.Groups[2].Value.ToLower());
-			
-			var alteration = Accidental.ALL.SingleOrDefault(
-				a => a.LyNotation.ToLower() == regexResult.Groups[3].Value.ToLower() 
-				|| a.Notation.ToLower() == regexResult.Groups[3].Value.ToLower());
-			
-			BaseTone = baseTone ?? throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
-			Alteration = alteration ?? throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
-			Octave = (ushort)input.Count(f => f == '\'');
-		}
-
-        private Pitch(NaturalNote baseTone, ushort value)
-        {
-			var semitoneDifference = (value % 12) - baseTone.Semitones;
-			var nearestOctaveValue = (int)(Math.Round((decimal)semitoneDifference / 12) * 12);
-			semitoneDifference -= nearestOctaveValue;
-			Alteration = Accidental.ALL.SingleOrDefault(acc => acc.SemitoneDifference == semitoneDifference);
-
-			if (Alteration == null)
-			{
-				Init(value);
-				return;
-			}
-
-			BaseTone = baseTone;
-			Octave = (ushort)((value - Alteration.SemitoneDifference) / 12);
-		}
-
-		private void Init(uint value)
-		{
-			Octave = (ushort)(value / 12);
-			var pitchClassValue = value % 12;
-
-			BaseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Semitones == pitchClassValue);
-
-			if (BaseTone != null)
-			{
-				Alteration = Accidental.NATURAL;
-			}
-			else
-			{
-				BaseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Semitones + 1 == pitchClassValue);
-				Alteration = Accidental.SHARP;
-			}
-		}
+        
 
         public bool Equals(Pitch other) => (BaseTone == other.BaseTone && Alteration == other.Alteration && Octave == other.Octave);
         
@@ -184,13 +117,6 @@ namespace DeParnasso.Core.Models
             sb.Append(BaseTone.Name.ToLower());
             sb.Append(Alteration.LyNotation);
             sb.Append(OctaveToString());
-            return sb.ToString();
-        }
-
-        private string OctaveToString()
-        {
-            var sb = new StringBuilder();
-            sb.Append('\'', Octave);
             return sb.ToString();
         }
 
@@ -238,11 +164,11 @@ namespace DeParnasso.Core.Models
             return new Pitch(newBaseTone, newPitchValue);
         }
 
-		public Pitch Add(string interval) => Add(new Interval(interval));
-		
+        public Pitch Add(string interval) => Add(new Interval(interval));
+
         public Interval Difference(Pitch other, bool octaveNeutral = false, bool absolute = false)
         {
-			var pitchDifference = (ToInt() - other.ToInt());
+            var pitchDifference = (ToInt() - other.ToInt());
 
             if (octaveNeutral)
             {
@@ -254,8 +180,8 @@ namespace DeParnasso.Core.Models
             {
                 throw new InvalidOperationException("Pitches are more than one octave apart!");
             }
-			
-			var diatonicDistance = DiatonicPosition - other.DiatonicPosition;
+
+            var diatonicDistance = DiatonicPosition - other.DiatonicPosition;
 
             if (absolute && diatonicDistance < 0)
                 return other.Difference(this);
@@ -281,12 +207,74 @@ namespace DeParnasso.Core.Models
         }
 
         public bool IsPureTo(Pitch other) => Difference(other).IsPure;
-        
+
         public bool IsConsonantTo(Pitch other) => Difference(other).IsConsonant;
 
-        public static bool operator ==(Pitch pitch, Object other) { return pitch.Equals(other); }
-        public static bool operator !=(Pitch pitch, Object other) { return (!pitch.Equals(other)); }
-        public static implicit operator Pitch(ushort value) { return new Pitch(value); }
-        public static explicit operator ushort(Pitch value) { return value.ToInt(); }
+        private Pitch() { }
+
+        public Pitch(uint value)
+        {
+            Init(value);
+        }
+
+        public Pitch(string input)
+        {
+            var regexResult = Regex.Match(input, RegexString);
+
+            if (!regexResult.Success)
+                throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
+
+            var baseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Name.ToLower() == regexResult.Groups[2].Value.ToLower());
+
+            var alteration = Accidental.ALL.SingleOrDefault(
+                a => a.LyNotation.ToLower() == regexResult.Groups[3].Value.ToLower()
+                || a.Notation.ToLower() == regexResult.Groups[3].Value.ToLower());
+
+            BaseTone = baseTone ?? throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
+            Alteration = alteration ?? throw new InvalidCastException($"Could not parse '{input}' to type Pitch");
+            Octave = (ushort)input.Count(f => f == '\'');
+        }
+
+        private Pitch(NaturalNote baseTone, ushort value)
+        {
+            var semitoneDifference = (value % 12) - baseTone.Semitones;
+            var nearestOctaveValue = (int)(Math.Round((decimal)semitoneDifference / 12) * 12);
+            semitoneDifference -= nearestOctaveValue;
+            Alteration = Accidental.ALL.SingleOrDefault(acc => acc.SemitoneDifference == semitoneDifference);
+
+            if (Alteration == null)
+            {
+                Init(value);
+                return;
+            }
+
+            BaseTone = baseTone;
+            Octave = (ushort)((value - Alteration.SemitoneDifference) / 12);
+        }
+
+        private void Init(uint value)
+        {
+            Octave = (ushort)(value / 12);
+            var pitchClassValue = value % 12;
+
+            BaseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Semitones == pitchClassValue);
+
+            if (BaseTone != null)
+            {
+                Alteration = Accidental.NATURAL;
+            }
+            else
+            {
+                BaseTone = NaturalNote.ALL.SingleOrDefault(nt => nt.Semitones + 1 == pitchClassValue);
+                Alteration = Accidental.SHARP;
+            }
+        }
+
+        private string OctaveToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append('\'', Octave);
+            return sb.ToString();
+        }
     }
 }

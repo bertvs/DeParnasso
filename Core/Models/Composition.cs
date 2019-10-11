@@ -9,20 +9,6 @@ namespace DeParnasso.Core.Models
 {
     public class Composition
     {
-        public class Voice
-        {
-            public string Name { get; set; }
-            public Melody Melody { get; set; }
-
-            public Voice(string name, Melody melody)
-            {
-                Name = name;
-                Melody = melody;
-            }
-
-            public Voice(string name, string melody) : this(name, new Melody(melody)) { }
-        }
-
         protected class CompositionHarmony : Accent
         {
             public Harmony Harmony { get; set; }
@@ -34,16 +20,6 @@ namespace DeParnasso.Core.Models
         public Meter Meter { get; set; }
         public List<Voice> Voices = new List<Voice>();
         protected List<CompositionHarmony> Harmonies = new List<CompositionHarmony>();
-
-        public Composition(Key key, Meter meter)
-        {
-            Key = key;
-            Meter = meter;
-        }
-
-        public Composition(string key, Meter meter) : this(new Key(key), meter) { }
-
-        public Composition(string key, string meter) : this(key, new Meter(meter)) { }
 
         public void AddVoice(string name, Melody melody)
         {
@@ -73,13 +49,6 @@ namespace DeParnasso.Core.Models
 
         public void AddVoice(string melody) => AddVoice(new Melody(melody));
 
-        private void OnChangeVoice()
-        {
-            Harmonies = new List<CompositionHarmony>();
-        }
-
-        public bool IsStrongNote(Tone note) => (note.StartPosition % Meter.BeatsPerBar == 0);
-
         public Fraction GetDuration()
         {
             var result = (Fraction)0;
@@ -91,7 +60,7 @@ namespace DeParnasso.Core.Models
         }
 
         public Harmony GetHarmonyAtPosition(Fraction position)
-		{
+        {
             var result = Harmonies.FirstOrDefault(h => h.StartPosition <= position && h.StartPosition + h.Duration > position);
 
             if (result == null)
@@ -100,7 +69,26 @@ namespace DeParnasso.Core.Models
             }
 
             return result.Harmony;
-		}
+        }
+
+        public bool IsStrongNote(Tone note) => (note.StartPosition % Meter.BeatsPerBar == 0);
+
+        public Composition() { }
+
+        public Composition(Key key, Meter meter)
+        {
+            Key = key;
+            Meter = meter;
+        }
+
+        public Composition(string key, Meter meter) : this(new Key(key), meter) { }
+
+        public Composition(string key, string meter) : this(key, new Meter(meter)) { }
+
+        private void OnChangeVoice()
+        {
+            Harmonies = new List<CompositionHarmony>();
+        }
 
         private CompositionHarmony DetermineHarmonyAtPosition(Fraction position)
         {
